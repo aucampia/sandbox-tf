@@ -1,0 +1,38 @@
+# https://taskfile.dev/usage/
+# https://pkg.go.dev/text/template
+# https://go-task.github.io/slim-sprig/
+version: "3"
+
+vars:
+  _TFDIRS:
+    sh: |
+      shopt -s globstar;
+      for tf_file in ./**/*.tf
+      do
+        printf "%s\n" "${tf_file%/*}"
+      done
+  TFDIRS: '{{ ._TFDIRS | splitList "\n" | uniq }}'
+
+
+tasks:
+  # terraform:init:
+
+  _debug:
+    cmds:
+      - |
+        echo "{{ .TFDIRS }}"
+
+  _rimraf:
+    # This task is a utility task for recursively removing directories, it is
+    # similar to rm -rf but not identical and it should work wherever there is
+    # a python interpreter. The name is inspired by
+    # <https://www.npmjs.com/package/rimraf>.
+    - cmd: |
+        {{.PYTHON}} -c '
+        from pathlib import Path;
+        import sys, shutil;
+        for path in sys.argv[1:]:
+          if Path(path).exists():
+            sys.stderr.write(f"removing {path}\n")
+            shutil.rmtree(path, ignore_errors=True)
+        ' {{.RIMRAF_TARGET}}

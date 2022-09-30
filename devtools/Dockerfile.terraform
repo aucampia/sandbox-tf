@@ -1,0 +1,37 @@
+FROM ghcr.io/terraform-linters/tflint-bundle:latest AS tflint
+FROM docker.io/aquasec/tfsec:latest AS tfsec
+FROM docker.io/hashicorp/terraform:latest AS terraform
+FROM quay.io/terraform-docs/terraform-docs:latest as tfdocs
+FROM docker.io/library/golang:alpine as golang
+
+RUN \
+    go env > /usr/local/bin/goenv.sh && \
+    true
+
+FROM docker.io/library/debian:11 AS base
+
+# https://packages.ubuntu.com/search?keywords=busybox&searchon=names&suite=focal&section=all
+RUN \
+    apt-get update && \
+    apt-get install -y \
+        --no-install-recommends \
+        socat \
+        git \
+        curl \
+        ca-certificates \
+        busybox \
+        && \
+    rm -vr /var/lib/apt/lists/* && \
+    true
+
+VOLUME /srv/workspace
+WORKDIR /srv/workspace
+
+COPY --from=terraform /bin/terraform /usr/bin/terraform
+COPY --from=tflint /root/.tflint.d /root/.tflint.d
+COPY --from=tflint /usr/local/bin/tflint /usr/bin/tflint
+COPY --from=tfsec  /usr/bin/tfsec /usr/bin/tfsec
+COPY --from=golang /usr/local/bin/goenv.sh /usr/local/bin/goenv.sh
+COPY --from=tfdocs /usr/local/bin/terraform-docs /usr/local/bin/terraform-docs
+
+ENV TF_PLUGIN_CACHE_DIR=/root/.cache/terraform.d/plugin-cache

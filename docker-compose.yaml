@@ -1,0 +1,20 @@
+services:
+  devtools:
+    # build:
+    #   context: devtools
+    #   dockerfile: Dockerfile.terraform
+    # image: ocreg.invalid/aucampia/sandbox/tf/devtools
+    image: ghcr.io/coopnorge/engineering-docker-images/e0/devtools-terraform-v1beta1:latest
+    working_dir: /srv/workspace
+    environment:
+      # - TFDIRS=.
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/personal-application_default_credentials.json
+    volumes:
+      - .:/srv/workspace:z
+      - xdg-cache-home:/root/.cache
+      - $HOME/.terraform.d:/root/.terraform.d/
+      - $HOME/.config/gcloud/:/root/.config/gcloud/
+      - dot-terraform:/srv/workspace/.terraform
+volumes:
+  xdg-cache-home: {}
+  dot-terraform: {}
