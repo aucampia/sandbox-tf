@@ -8,6 +8,14 @@ module "try_bucket_defaults" {
   google_billing_account = var.google_billing_account
 }
 
+module "try_bucket_safe" {
+  source                 = "./try_bucket_safe"
+  google_project_id      = "try-bucksaf-660n"
+  google_region          = var.google_region
+  google_zone            = var.google_zone
+  google_billing_account = var.google_billing_account
+}
+
 
 # module "sappmr_profile_data" {
 #   source = "./sappmr-profile-data"
