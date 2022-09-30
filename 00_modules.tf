@@ -10,21 +10,8 @@ module "try_bucket_defaults" {
 
 module "try_bucket_safe" {
   source                 = "./try_bucket_safe"
-  google_project_id      = "try-bucksaf-660n"
+  google_project_id      = "try-bucksaf-n6fm"
   google_region          = var.google_region
   google_zone            = var.google_zone
   google_billing_account = var.google_billing_account
 }
-
-
-# module "sappmr_profile_data" {
-#   source = "./sappmr-profile-data"
-#   gcn_project_id = var.project_id
-#   gcn_network_name = data.google_compute_network.coop.name
-#   gcn_subnet_name = data.google_compute_subnetwork.project.name
-# }
-
-# module "cloud_build_rclone" {
-#   source = "./cb_rclone"
-
-# }

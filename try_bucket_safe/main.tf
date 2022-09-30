@@ -34,7 +34,7 @@ resource "google_storage_bucket" "bucket" {
 }
 
 resource "google_storage_bucket_object" "object" {
-  bucket  = google_storage_bucket.bucket.id
+  bucket  = google_storage_bucket.bucket.name
   name    = "object"
   content = <<-EOT
     sensitive content
@@ -49,4 +49,17 @@ resource "google_project_iam_member" "default_client" {
   project = data.google_project.default.id
   role    = each.value
   member  = "user:${data.google_client_openid_userinfo.default.email}"
+}
+
+
+# resource "google_project_iam_binding" "project" {
+#   project = data.google_project.default.id
+#   role    = "roles/storage.legacyBucketReader"
+#   members = []
+# }
+
+resource "google_storage_bucket_iam_binding" "project" {
+  bucket = google_storage_bucket.bucket.name
+  role    = "roles/storage.legacyBucketReader"
+  members = []
 }
