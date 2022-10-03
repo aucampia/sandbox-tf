@@ -28,6 +28,9 @@ resource "google_project_service" "project_service" {
   for_each = toset([
     "cloudasset.googleapis.com",
     "policytroubleshooter.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "serviceusage.googleapis.com",
+    "bigquery.googleapis.com",
   ])
   service                    = each.value
   disable_dependent_services = true
@@ -51,6 +54,7 @@ data "google_project" "default" {
 resource "google_project_iam_member" "default_client" {
   for_each = toset([
     "roles/iam.serviceAccountTokenCreator",
+    "roles/serviceusage.serviceUsageAdmin",
   ])
   project = google_project.default.id
   role    = each.value
@@ -77,49 +81,68 @@ resource "google_project_iam_member" "viewer_sa" {
 # Buckets
 ########################################################################
 
-#tfsec:ignore:google-storage-enable-ubla
 resource "google_storage_bucket" "bucket" {
   name     = "${var.google_project_id}-bucket"
   location = var.google_region
 
   force_destroy = true
 
-  # uniform_bucket_level_access = true
+  uniform_bucket_level_access = true
+  depends_on = [data.google_project.default]
 }
 
 resource "google_storage_bucket_object" "object" {
   bucket  = google_storage_bucket.bucket.name
-  name    = "object"
-  content = <<-EOT
-    sensitive content
-  EOT
+  name    = "data.ndjson"
+  content = file("${path.module}/data.ndjson")
   depends_on = [data.google_project.default]
 }
 
-# resource "google_storage_bucket_iam_binding" "bucket" {
-#   bucket = google_storage_bucket.bucket.name
-#   role    = "roles/storage.legacyBucketReader"
-#   members = []
-# }
+########################################################################
+# BigQuery
+########################################################################
 
-#tfsec:ignore:google-storage-enable-ubla
-# # # resource "google_project_iam_binding" "project" {
-# # #   project = data.google_project.default.id
-# # #   role    = "roles/storage.legacyBucketReader"
-# # #   members = []
-# # # }
+resource "google_bigquery_dataset" "dataset_aaa" {
+  dataset_id = "dataset_aaa"
+  location   = var.google_region
 
+  # https://cloud.google.com/bigquery/docs/dataset-access-controls
+  access {
+    role          = "OWNER"
+    special_group = "projectOwners"
+  }
+  access {
+    role          = "WRITER"
+    special_group = "projectWriters"
+  }
+  depends_on = [data.google_project.default]
+}
 
-# resource "google_storage_bucket" "second" {
-#   name     = "${var.google_project_id}-second"
-#   location = var.google_region
+resource "google_bigquery_table" "table_aaa" {
+  dataset_id = google_bigquery_dataset.dataset_aaa.dataset_id
+  table_id   = "table_aaa"
 
-#   # uniform_bucket_level_access = true
-# }
+  deletion_protection = false
 
-# resource "google_storage_bucket" "fourth" {
-#   name     = "${var.google_project_id}-fourth"
-#   location = var.google_region
+  schema = file("${path.module}/schema.json")
+  depends_on = [data.google_project.default]
+}
 
-#   uniform_bucket_level_access = true
+# resource "google_bigquery_job" "table_aaa" {
+#   job_id = "table_aaa"
+#   load {
+#     source_uris = [
+#       "gs://${google_storage_bucket_object.object.bucket}/${google_storage_bucket_object.object.name}"
+#     ]
+#     source_format = "NEWLINE_DELIMITED_JSON"
+
+#     destination_table {
+#       project_id = google_bigquery_table.table_aaa.project
+#       dataset_id = google_bigquery_dataset.dataset_aaa.dataset_id
+#       table_id   = google_bigquery_table.table_aaa.table_id
+#     }
+
+#     create_disposition = "CREATE_NEVER"
+#     write_disposition  = "WRITE_TRUNCATE"
+#   }
 # }

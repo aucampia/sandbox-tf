@@ -7,7 +7,7 @@ services:
     image: ghcr.io/coopnorge/engineering-docker-images/e0/devtools-terraform-v1beta1:latest
     working_dir: /srv/workspace
     environment:
-      # - TFDIRS=.
+      - TFDIRS=.
       - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/personal-application_default_credentials.json
     volumes:
       - .:/srv/workspace:z

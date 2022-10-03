@@ -37,3 +37,11 @@ docker compose run --rm devtools validate-fix
 # ...
 docker compose run --rm devtools terraform apply # -auto-approve
 ```
+
+```
+gcloud projects list
+docker compose run --rm devtools terraform destroy -target=module.try_bucket_safe
+docker compose run --rm devtools terraform destroy -target=module.try_bucket_defaults
+
+
+```
